@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音迹星工作室 - 专属音乐分享</title>
+    <style>
+        body { margin: 0; background: #0a0a0b; color: #fff; font-family: 'PingFang SC', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        .record-box { position: relative; width: 260px; height: 260px; }
+        .record { width: 100%; height: 100%; background: url('https://image.freepik.com/free-vector/vinyl-record-disc-mockup_1017-25126.jpg') center/cover; border-radius: 50%; border: 4px solid #333; animation: rotate 10s linear infinite; animation-play-state: paused; box-shadow: 0 0 40px rgba(0,0,0,0.6); }
+        .playing { animation-play-state: running; }
+        .brand { margin-top: 50px; text-align: center; }
+        .brand-name { color: #c0a16b; font-size: 22px; font-weight: bold; letter-spacing: 4px; margin-bottom: 8px; }
+        .brand-tag { color: #666; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        audio { margin-top: 30px; filter: invert(1); opacity: 0.7; width: 80%; }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="record-box">
+        <div id="disk" class="record"></div>
+    </div>
+    <div class="brand">
+        <div class="brand-name">音迹星工作室</div>
+        <div class="brand-tag">YIN JI XING STUDIO</div>
+    </div>
+    <audio id="audio" controls></audio>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const src = params.get('src');
+        const audio = document.getElementById('audio');
+        const disk = document.getElementById('disk');
+
+        if (src) { audio.src = src; }
+
+        audio.onplay = () => disk.classList.add('playing');
+        audio.onpause = () => disk.classList.remove('playing');
+    </script>
+</body>
+</html>
