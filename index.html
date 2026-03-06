@@ -1,41 +1,91 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>音迹星工作室 - 专属音乐分享</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>音迹星工作室 - 试听交付中心</title>
     <style>
-        body { margin: 0; background: #0a0a0b; color: #fff; font-family: 'PingFang SC', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
-        .record-box { position: relative; width: 260px; height: 260px; }
-        .record { width: 100%; height: 100%; background: url('https://image.freepik.com/free-vector/vinyl-record-disc-mockup_1017-25126.jpg') center/cover; border-radius: 50%; border: 4px solid #333; animation: rotate 10s linear infinite; animation-play-state: paused; box-shadow: 0 0 40px rgba(0,0,0,0.6); }
+        /* 禁止文字选择 */
+        * { -webkit-touch-callout:none; -webkit-user-select:none; -khtml-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none; }
+        
+        body { margin: 0; background: #0a0a0b; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
+        
+        /* 品牌氛围 */
+        .record-box { position: relative; width: 260px; height: 260px; pointer-events: none; }
+        .record { width: 100%; height: 100%; background: url('https://image.freepik.com/free-vector/vinyl-record-disc-mockup_1017-25126.jpg') center/cover; border-radius: 50%; border: 4px solid #333; animation: rotate 10s linear infinite; animation-play-state: paused; }
         .playing { animation-play-state: running; }
+        
         .brand { margin-top: 50px; text-align: center; }
-        .brand-name { color: #c0a16b; font-size: 22px; font-weight: bold; letter-spacing: 4px; margin-bottom: 8px; }
-        .brand-tag { color: #666; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; }
-        audio { margin-top: 30px; filter: invert(1); opacity: 0.7; width: 80%; }
+        .brand-name { color: #c0a16b; font-size: 22px; font-weight: bold; letter-spacing: 4px; }
+        .brand-tag { color: #444; font-size: 10px; margin-top: 5px; letter-spacing: 2px; }
+
+        /* 播放器容器加固 */
+        .player-container { margin-top: 30px; position: relative; width: 85%; max-width: 400px; }
+        /* 覆盖层防止点击右键或长按 */
+        .player-guard { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; }
+        
+        audio { width: 100%; filter: invert(1); opacity: 0.8; }
+        /* 隐藏 Chrome 自带的下载按钮 */
+        audio::-webkit-media-controls-enclosure { overflow:hidden; }
+        audio::-webkit-media-controls-panel { width: calc(100% + 30px); }
+
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        /* 防盗版水印 */
+        .watermark { position: fixed; top: 10px; right: 10px; font-size: 10px; color: rgba(255,255,255,0.1); z-index: 100; pointer-events: none; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false" onselectstart="return false">
+    <div class="watermark">音迹星工作室 | 内部试听件</div>
+    
     <div class="record-box">
         <div id="disk" class="record"></div>
     </div>
+    
     <div class="brand">
         <div class="brand-name">音迹星工作室</div>
         <div class="brand-tag">YIN JI XING STUDIO</div>
     </div>
-    <audio id="audio" controls></audio>
+
+    <div class="player-container">
+        <div class="player-guard"></div>
+        <audio id="audio" controls controlsList="nodownload" oncontextmenu="return false"></audio>
+    </div>
 
     <script>
+        // 1. 禁用 F12, Ctrl+U, Ctrl+Shift+I 等快捷键
+        document.onkeydown = function(e) {
+            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && e.keyCode == 73) || (e.ctrlKey && e.keyCode == 85)) {
+                return false;
+            }
+        };
+
         const params = new URLSearchParams(window.location.search);
-        const src = params.get('src');
+        const rawSrc = params.get('src');
         const audio = document.getElementById('audio');
         const disk = document.getElementById('disk');
 
-        if (src) { audio.src = src; }
+        // 2. 核心混淆：将直接地址转化为内存 Blob 地址
+        // 这样在 Elements 检查时，src 看起来像 "blob:https://..." 而不是真正的 Supabase 链接
+        if (rawSrc) {
+            fetch(rawSrc)
+                .then(response => response.blob())
+                .then(blob => {
+                    const blobUrl = URL.createObjectURL(blob);
+                    audio.src = blobUrl;
+                })
+                .catch(err => console.error("音频加载失败"));
+        }
 
         audio.onplay = () => disk.classList.add('playing');
         audio.onpause = () => disk.classList.remove('playing');
+        
+        // 3. 定时检查是否有人打开控制台（若打开则清除页面内容）
+        setInterval(function() {
+            if (window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160) {
+                document.body.innerHTML = "<div style='padding:50px;text-align:center'>为了您的版权安全，请勿尝试调试。</div>";
+            }
+        }, 1000);
     </script>
 </body>
-
 </html>
