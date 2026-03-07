@@ -7,66 +7,116 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
     <style>
         :root { --accent: #c0a16b; --bg: #0a0a0a; --text: #ffffff; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'PingFang SC', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        * { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; box-sizing: border-box; outline: none; }
         
-        /* 1:1 物理仿真黑胶 */
-        .record-box { width: 300px; height: 300px; position: relative; margin-top: -50px; }
-        .vinyl { width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle, #000 30%, transparent 31%), repeating-radial-gradient(circle, #0a0a0a, #000 1px, #181818 2px); border: 8px solid #111; display: flex; align-items: center; justify-content: center; animation: rotate 20s linear infinite paused; position: relative; }
+        body { 
+            margin: 0; background: var(--bg); color: var(--text); 
+            font-family: 'PingFang SC', sans-serif; height: 100vh; 
+            display: flex; flex-direction: column; overflow: hidden; 
+        }
+
+        /* 顶部导航：回正按钮 */
+        .nav { padding: 15px 20px; display: flex; justify-content: flex-end; z-index: 100; }
+        .btn-reset { 
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: var(--accent); padding: 8px 15px; border-radius: 12px; font-size: 11px; cursor: pointer;
+        }
+
+        /* 1. 1:1 物理仿真黑胶 */
+        .record-section { flex-shrink: 0; display: flex; justify-content: center; padding: 10px 0; }
+        .record-box { width: 260px; height: 260px; position: relative; }
+        .vinyl { 
+            width: 100%; height: 100%; border-radius: 50%; 
+            background: radial-gradient(circle, #000 30%, transparent 31%), 
+                        repeating-radial-gradient(circle, #0a0a0a, #000 1px, #181818 2px); 
+            border: 6px solid #111; display: flex; align-items: center; justify-content: center; 
+            animation: rotate 20s linear infinite paused; position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        }
         .vinyl.playing { animation-play-state: running; }
-        /* 钢琴黑反射环 */
-        .vinyl::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 170deg at 50% 50%, transparent 0deg, rgba(255,255,255,0.1) 8deg, transparent 15deg, transparent 170deg, rgba(255,255,255,0.1) 178deg, transparent 185deg); pointer-events: none; }
-        .cover-art { width: 75%; height: 75%; border-radius: 50%; background-size: cover; background-position: center; z-index: 5; background-image: url('https://pdyvfhfwqlrizgcxlgax.supabase.co/storage/v1/object/public/MUSIC-FILES/default_gold.jpg'); }
+        .vinyl::after { 
+            content: ""; position: absolute; inset: 0; border-radius: 50%; 
+            background: conic-gradient(from 170deg at 50% 50%, transparent 0deg, rgba(255,255,255,0.1) 8deg, transparent 15deg, transparent 170deg, rgba(255,255,255,0.1) 178deg, transparent 185deg); 
+            pointer-events: none; 
+        }
+        .cover-art { width: 75%; height: 75%; border-radius: 50%; background-size: cover; background-position: center; z-index: 5; background-color: #222; }
 
-        .info-box { text-align: center; margin-top: 30px; }
-        .main-title { font-size: 28px; font-weight: 700; letter-spacing: 4px; margin-bottom: 5px; }
-        .status-msg { font-size: 14px; color: #888; letter-spacing: 2px; }
+        /* 2. 标题区 */
+        .info-box { text-align: center; padding: 10px 0; }
+        .main-title { font-size: 24px; font-weight: 700; letter-spacing: 4px; margin: 0; }
+        .status-msg { font-size: 12px; color: #666; letter-spacing: 2px; margin-top: 5px; }
 
-        /* 歌词视口 */
-        .lrc-viewport { height: 120px; overflow: hidden; margin-top: 20px; width: 100%; mask-image: linear-gradient(to bottom, transparent, #fff 50%, transparent); -webkit-mask-image: linear-gradient(to bottom, transparent, #fff 50%, transparent); }
-        #lrc-list { list-style: none; padding: 0; margin: 0; transition: transform 0.5s; text-align: center; }
-        .lrc-line { padding: 10px; font-size: 14px; color: rgba(255,255,255,0.2); transition: 0.3s; }
-        .lrc-line.active { color: #fff; font-size: 18px; transform: scale(1.1); }
+        /* 3. 歌词视口：弹性自适应，绝不遮挡 */
+        .lrc-viewport { 
+            flex-grow: 1; position: relative; overflow-y: auto; 
+            scroll-snap-type: y mandatory;
+            mask-image: linear-gradient(to bottom, transparent, #fff 40%, #fff 60%, transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, #fff 40%, #fff 60%, transparent);
+            margin: 10px 0;
+        }
+        .lrc-viewport::-webkit-scrollbar { display: none; }
+        #lrc-list { list-style: none; padding: 150px 0; margin: 0; text-align: center; }
+        .lrc-line { 
+            padding: 15px 20px; font-size: 14px; color: rgba(255,255,255,0.2); 
+            transition: 0.4s ease; min-height: 50px; display: flex; align-items: center; justify-content: center;
+            scroll-snap-align: center; cursor: pointer;
+        }
+        .lrc-line.active { color: #fff; font-size: 19px; font-weight: 600; transform: scale(1.08); }
+        .lrc-line.preview { color: var(--accent); opacity: 0.5; font-size: 17px; transform: scale(1.05); }
 
-        /* 控制面板 */
-        .controls-card { position: fixed; bottom: 40px; width: 90%; max-width: 400px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 30px; backdrop-filter: blur(20px); }
-        .progress-box { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        /* 4. 控制面板 */
+        .controls-section { flex-shrink: 0; padding: 20px; background: linear-gradient(to top, #000, transparent); }
+        .controls-card { 
+            width: 100%; max-width: 400px; margin: 0 auto; 
+            background: rgba(255,255,255,0.05); padding: 15px 20px; border-radius: 25px; 
+            backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05);
+        }
+        .progress-box { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
         .time-lab { font-size: 10px; color: var(--accent); min-width: 35px; font-family: monospace; }
         .p-bar { flex: 1; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; cursor: pointer; position: relative; }
         .p-fill { height: 100%; background: var(--accent); width: 0%; border-radius: 2px; }
         .main-btn { width: 44px; height: 44px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; cursor: pointer; }
-        .disclaimer { font-size: 9px; color: #555; text-align: center; margin-top: 20px; letter-spacing: 1px; }
+        .disclaimer { font-size: 8px; color: #444; text-align: center; margin-top: 15px; letter-spacing: 1px; }
 
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div class="record-box">
-        <div id="disk" class="vinyl" onclick="togglePlay()">
-            <div id="cover" class="cover-art"></div>
+    <div class="nav">
+        <button class="btn-reset" onclick="resetLrc()">🎯 歌词复位</button>
+    </div>
+
+    <div class="record-section">
+        <div class="record-box">
+            <div id="disk" class="vinyl" onclick="togglePlay()">
+                <div id="cover" class="cover-art"></div>
+            </div>
         </div>
     </div>
 
     <div class="info-box">
-        <div class="main-title">音迹星工作室</div>
-        <div id="status" class="status-msg">正在接入星轨数据...</div>
+        <h1 class="main-title">音迹星工作室</h1>
+        <div id="status" class="status-msg">CUSTOMER PREVIEW</div>
     </div>
 
-    <div class="lrc-viewport">
+    <div class="lrc-viewport" id="vPort" onscroll="handleScroll()">
         <ul id="lrc-list"></ul>
     </div>
 
-    <div class="controls-card">
-        <div class="progress-box" onclick="seek(event)">
-            <span class="time-lab" id="t-cur">00:00</span>
-            <div class="p-bar" id="p-bar"><div class="p-fill" id="p-fill"></div></div>
-            <span class="time-lab" id="t-dur">00:00</span>
+    <div class="controls-section">
+        <div class="controls-card">
+            <div class="progress-box" onclick="seek(event)">
+                <span class="time-lab" id="t-cur">00:00</span>
+                <div class="p-bar" id="p-bar"><div class="p-fill" id="p-fill"></div></div>
+                <span class="time-lab" id="t-dur">00:00</span>
+            </div>
+            <div class="main-btn" onclick="togglePlay()">
+                <svg id="svg-p" viewBox="0 0 24 24" width="24" height="24"><path d="M8 5v14l11-7z"/></svg>
+                <svg id="svg-s" viewBox="0 0 24 24" width="24" height="24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            </div>
+            <div class="disclaimer">专属定制 · 严禁转载 · 音迹星工作室</div>
         </div>
-        <div class="main-btn" onclick="togglePlay()">
-            <svg id="svg-p" viewBox="0 0 24 24" width="24" height="24"><path fill="#000" d="M8 5v14l11-7z"/></svg>
-            <svg id="svg-s" viewBox="0 0 24 24" width="24" height="24" style="display:none;"><path fill="#000" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-        </div>
-        <div class="disclaimer">专属定制 · 严禁转载 · 音迹星工作室</div>
     </div>
 
     <audio id="audio" crossorigin="anonymous"></audio>
@@ -74,21 +124,21 @@
     <script>
         const audio = document.getElementById('audio');
         const disk = document.getElementById('disk');
-        const status = document.getElementById('status');
         const list = document.getElementById('lrc-list');
+        const vPort = document.getElementById('vPort');
         const params = new URLSearchParams(window.location.search);
 
-        // 获取 URL 传参
+        let isAuto = true;
+        let lyrics = [];
+
+        // 1. 数据接入
         const audioUrl = params.get('audio');
         const lrcUrl = params.get('lrc');
 
         if (audioUrl) {
             audio.src = audioUrl;
-            status.innerText = "CUSTOMER PREVIEW"; // 修复报错问题
-            
-            // 自动提取 ID3 封面
             window.jsmediatags.read(audioUrl, {
-                onSuccess: function(tag) {
+                onSuccess: (tag) => {
                     const img = tag.tags.picture;
                     if (img) {
                         let b64 = "";
@@ -98,32 +148,68 @@
                 }
             });
         } else {
-            status.innerText = "未找到音频件";
+            document.getElementById('status').innerText = "未找到音频件";
         }
 
-        // 解析并滚动歌词
         if (lrcUrl) {
             fetch(lrcUrl).then(r => r.text()).then(t => {
-                const lyrics = t.split('\n').map(l => {
+                lyrics = t.split('\n').map(l => {
                     const m = l.match(/\[(\d+):(\d+\.\d+)\](.*)/);
                     return m ? { time: parseInt(m[1])*60 + parseFloat(m[2]), text: m[3].trim() } : null;
                 }).filter(x => x);
-                
-                list.innerHTML = lyrics.map((l, i) => `<li class="lrc-line" id="r-${i}">${l.text}</li>`).join('');
-                
-                audio.addEventListener('timeupdate', () => {
-                    let idx = 0;
-                    lyrics.forEach((l, i) => { if (audio.currentTime >= l.time) idx = i; });
-                    document.querySelectorAll('.lrc-line').forEach(el => el.classList.remove('active'));
-                    const activeLine = document.getElementById(`r-${idx}`);
-                    if (activeLine) {
-                        activeLine.classList.add('active');
-                        list.style.transform = `translateY(${-activeLine.offsetTop + 40}px)`;
-                    }
-                });
+                list.innerHTML = lyrics.map((l, i) => `<li class="lrc-line" id="r-${i}" onclick="jumpTo(${i})">${l.text}</li>`).join('');
             });
         }
 
+        // 2. 交互逻辑：复位与预览
+        function handleScroll() {
+            if (isAuto) return;
+            const mid = vPort.scrollTop + vPort.offsetHeight / 2;
+            document.querySelectorAll('.lrc-line').forEach(line => {
+                const lineMid = line.offsetTop + line.offsetHeight / 2;
+                line.classList.remove('preview');
+                if (Math.abs(mid - lineMid) < 30 && !line.classList.contains('active')) {
+                    line.classList.add('preview');
+                }
+            });
+        }
+
+        function resetLrc() {
+            isAuto = true;
+            syncLrc();
+        }
+
+        function jumpTo(i) {
+            isAuto = false;
+            const line = document.getElementById(`r-${i}`);
+            vPort.scrollTo({ top: line.offsetTop - vPort.offsetHeight/2 + line.offsetHeight/2, behavior: 'smooth' });
+        }
+
+        // 3. 播放同步
+        function syncLrc() {
+            if (!isAuto || lyrics.length === 0) return;
+            let idx = 0;
+            lyrics.forEach((l, i) => { if (audio.currentTime >= l.time) idx = i; });
+            const activeLine = document.getElementById(`r-${idx}`);
+            if (activeLine) {
+                document.querySelectorAll('.lrc-line').forEach(el => el.classList.remove('active', 'preview'));
+                activeLine.classList.add('active');
+                vPort.scrollTo({ top: activeLine.offsetTop - vPort.offsetHeight/2 + activeLine.offsetHeight/2, behavior: 'smooth' });
+            }
+        }
+
+        audio.addEventListener('timeupdate', () => {
+            syncLrc();
+            const p = (audio.currentTime / audio.duration) * 100;
+            document.querySelector('.p-fill').style.width = p + '%';
+            document.getElementById('t-cur').innerText = fmt(audio.currentTime);
+            document.getElementById('t-dur').innerText = fmt(audio.duration);
+        });
+
+        vPort.addEventListener('touchstart', () => isAuto = false);
+        vPort.addEventListener('wheel', () => isAuto = false);
+
+        // 4. 基础控制
         function togglePlay() {
             if (audio.paused) { audio.play(); ui(true); } else { audio.pause(); ui(false); }
         }
@@ -132,20 +218,9 @@
             document.getElementById('svg-s').style.display = p ? 'block' : 'none';
             p ? disk.classList.add('playing') : disk.classList.remove('playing');
         }
-        audio.addEventListener('timeupdate', () => {
-            if (isNaN(audio.duration)) return;
-            const p = (audio.currentTime / audio.duration) * 100;
-            document.getElementById('p-fill').style.width = p + '%';
-            document.getElementById('t-cur').innerText = fmt(audio.currentTime);
-            document.getElementById('t-dur').innerText = fmt(audio.duration);
-        });
         function fmt(s) { const m=Math.floor(s/60),sec=Math.floor(s%60); return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`; }
         function seek(e) { audio.currentTime = ((e.clientX - document.getElementById('p-bar').getBoundingClientRect().left) / document.getElementById('p-bar').offsetWidth) * audio.duration; }
-        
-        // 键盘 Space 控制
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
-        });
+        window.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); togglePlay(); } });
     </script>
 </body>
 </html>
