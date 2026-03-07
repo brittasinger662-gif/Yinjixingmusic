@@ -10,7 +10,6 @@
             --accent: #c0a16b; --bg: #050505; --text: #ffffff;
             --text-dim: rgba(255, 255, 255, 0.15);
             --glass: rgba(255, 255, 255, 0.05);
-            /* 极光色组：参考视频 */
             --aurora-1: #4facfe; --aurora-2: #00f2fe; --aurora-3: #7028e4;
         }
         [data-theme="light"] {
@@ -20,17 +19,13 @@
         * { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; box-sizing: border-box; outline: none; }
         body { margin: 0; background: var(--bg); color: var(--text); font-family: 'PingFang SC', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; transition: 0.5s; position: relative; }
 
-        /* 1. 动态极光流体光波 */
+        /* 1. 极光光波层：默认模式专属 */
         .aurora-container { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; z-index: 2; pointer-events: none; }
         body.mode-default .aurora-container { display: flex; }
-        .aurora-layer {
-            position: absolute; width: 360px; height: 360px; border-radius: 50%;
-            filter: blur(45px); opacity: 0; mix-blend-mode: screen; transition: 0.5s;
-        }
+        .aurora-layer { position: absolute; width: 360px; height: 360px; border-radius: 50%; filter: blur(45px); opacity: 0; mix-blend-mode: screen; transition: 0.5s; }
         .layer-1 { background: radial-gradient(circle, var(--aurora-1) 0%, transparent 70%); }
         .layer-2 { background: radial-gradient(circle, var(--aurora-2) 0%, transparent 70%); }
         .layer-3 { background: radial-gradient(circle, var(--aurora-3) 0%, transparent 70%); }
-        
         .playing .layer-1 { animation: aurora-pulse 4s infinite ease-in-out; opacity: 0.5; }
         .playing .layer-2 { animation: aurora-pulse 3s infinite ease-in-out alternate; opacity: 0.4; }
         .playing .layer-3 { animation: aurora-pulse 5s infinite ease-out; opacity: 0.3; }
@@ -41,10 +36,9 @@
         .nav { padding: 10px 20px; display: flex; justify-content: space-between; z-index: 100; flex-shrink: 0; }
         .btn-tool { background: var(--glass); border: 1px solid rgba(128,128,128,0.1); color: var(--text); padding: 8px 12px; border-radius: 12px; font-size: 11px; cursor: pointer; }
 
-        /* 唱片布局 */
+        /* 2. 唱片核心区域 */
         .record-section { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 10; width: 100%; }
         .record-box { width: 260px; height: 260px; position: relative; display: flex; align-items: center; justify-content: center; transition: 0.5s; }
-        
         .vinyl { width: 100%; height: 100%; border-radius: 50%; background: repeating-radial-gradient(circle, #0a0a0a, #000 1px, #181818 2px); border: 6px solid #111; display: flex; align-items: center; justify-content: center; animation: rotate 20s linear infinite paused; position: relative; z-index: 5; box-shadow: 0 10px 50px rgba(0,0,0,0.8); }
         .vinyl.playing { animation-play-state: running; }
 
@@ -55,7 +49,7 @@
         .cover-art { width: 78%; height: 78%; border-radius: 50%; background-size: cover; background-position: center; z-index: 10; background-color: #111; transition: 0.5s; background-image: url('https://pdyvfhfwqlrizgcxlgax.supabase.co/storage/v1/object/public/MUSIC-FILES/default_gold.jpg'); }
         body.mode-pure .cover-art { width: 33%; height: 33%; z-index: 20; }
 
-        /* 品牌词：慢速流光呼吸 */
+        /* 3. 品牌词：呼吸流光 */
         .brand-section { text-align: center; margin-top: 25px; display: none; z-index: 100; }
         body.mode-pure .brand-section { display: block; }
         .brand-title { 
@@ -65,9 +59,9 @@
             animation: brand-shimmer 8s infinite linear; 
         }
         .pinyin { font-size: 9px; color: var(--accent); opacity: 0.6; letter-spacing: 2px; margin-top: 5px; }
-        .pure-disclaimer { font-size: 9px; color: #555; margin-top: 15px; letter-spacing: 1.5px; }
+        .pure-disclaimer { font-size: 9px; color: #555; margin-top: 20px; letter-spacing: 1.5px; }
 
-        /* 歌词视口 */
+        /* 4. 歌词布局 */
         .lrc-viewport { flex-grow: 1.5; position: relative; overflow-y: auto; scroll-snap-type: y mandatory; width: 70%; margin: 0 auto; z-index: 20; mask-image: linear-gradient(to bottom, transparent 0%, #fff 40%, #fff 60%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #fff 40%, #fff 60%, transparent 100%); }
         .lrc-viewport::-webkit-scrollbar { display: none; }
         #lrc-list { list-style: none; padding: 220px 0; margin: 0; text-align: center; }
@@ -80,7 +74,7 @@
         .play-here-btn svg { fill: #000; width: 14px; height: 14px; }
         body.mode-lyrics .lrc-line.preview .play-here-btn { display: flex; }
 
-        /* 统一播放控制 */
+        /* 5. 控制面板与拖拽进度条 */
         .controls-section { flex-shrink: 0; padding: 10px 20px 40px; z-index: 110; width: 100%; }
         .controls-card { width: 100%; max-width: 400px; margin: 0 auto; background: var(--glass); padding: 15px 20px; border-radius: 30px; backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
         .progress-box { display: flex; align-items: center; gap: 12px; }
@@ -158,9 +152,9 @@
         const params = new URLSearchParams(window.location.search);
 
         let isAuto = true, lyrics = [], displayMode = 0, idleTimer = null, isDragging = false;
-        let lastManualIndex = -1; // 【物理锚点】锁定预览行索引
+        let lastManualIndex = -1; // 【物理锚点】锁定行索引
 
-        // 初始化
+        // 1. 初始化
         const audioUrl = params.get('audio'), lrcUrl = params.get('lrc');
         if (audioUrl) {
             audio.src = audioUrl;
@@ -185,23 +179,23 @@
             });
         }
 
-        // 【重构】模式切换锁定逻辑
+        // 2. 【核心重构】基于索引的模式切换锁定
         function handleGlobalClick(e) {
             const forbidden = ['btn-tool', 'lrc-line', 'record-box', 'main-btn', 'p-bar-container', 'play-here-btn', 'p-handle'];
             if (forbidden.some(cls => e.target.classList.contains(cls) || e.target.closest('.' + cls))) return;
             
-            // 切换前：抓取当前视口正中央的行索引
-            lastManualIndex = getCenterIndex();
+            // 模式切换前：获取当前视口正中心那行歌词的 Index
+            if (!isAuto) lastManualIndex = getCenterIndex();
 
             displayMode = (displayMode + 1) % 3;
             body.className = ['mode-default', 'mode-lyrics', 'mode-pure'][displayMode];
             
-            // 切换后：如果是手动预览，强行基于索引回弹
+            // 模式切换后：如果是手动模式，强制回弹到锁定行
             if (!isAuto) {
-                // 使用延时确保 DOM 重新排版后再锁定位置
+                // 使用较长的延时 (100ms) 确保 CSS 动画和 DOM 高度重排完毕
                 setTimeout(() => {
                     scrollToIndex(lastManualIndex, 'auto');
-                }, 50);
+                }, 100);
                 resetIdleTimer();
             }
         }
@@ -218,12 +212,17 @@
 
         function scrollToIndex(i, behavior = 'smooth') {
             const line = document.getElementById(`r-${i}`);
-            if (line) vPort.scrollTo({ top: line.offsetTop - vPort.offsetHeight/2 + line.offsetHeight/2, behavior: behavior });
+            if (line) {
+                vPort.scrollTo({ 
+                    top: line.offsetTop - vPort.offsetHeight/2 + line.offsetHeight/2, 
+                    behavior: behavior 
+                });
+            }
         }
 
         function toggleTheme(e) { e.stopPropagation(); body.setAttribute('data-theme', body.getAttribute('data-theme') === 'light' ? 'dark' : 'light'); }
 
-        // 智能回弹
+        // 3. 智能回弹
         function resetIdleTimer() { clearTimeout(idleTimer); if (!isAuto) idleTimer = setTimeout(() => { resetLrc(); }, 8000); }
         function setManualMode() { isAuto = false; resetBtn.style.display = 'block'; resetIdleTimer(); }
         function resetLrc(e) { if(e) e.stopPropagation(); isAuto = true; resetBtn.style.display = 'none'; clearTimeout(idleTimer); syncLrc(true); }
@@ -232,19 +231,19 @@
         vPort.addEventListener('wheel', setManualMode);
         vPort.addEventListener('touchstart', setManualMode);
 
-        // 粒子
+        // 4. 粒子与同步
         const canvas = document.getElementById('particle-canvas'), ctx = canvas.getContext('2d');
         let particles = [];
         function initCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         window.onresize = initCanvas; initCanvas();
-        class Particle { constructor() { this.reset(); } reset() { this.x = canvas.width / 2; this.y = canvas.height / 3.4; this.size = Math.random() * 2 + 1; const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 1.8 + 0.6; this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed; this.life = 1; this.decay = Math.random() * 0.008 + 0.004; } update() { this.x += this.vx; this.y += this.vy; this.life -= this.decay; if (this.life <= 0) this.reset(); } draw() { ctx.fillStyle = `rgba(220, 180, 110, ${this.life})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); } }
+        class Particle { constructor() { this.reset(); } reset() { this.x = canvas.width / 2; this.y = canvas.height / 3.4; this.size = Math.random() * 2 + 1; const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 1.8 + 0.6; this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed; this.life = 1; this.decay = Math.random() * 0.008 + 0.004; } update() { this.x += this.vx; this.y += this.vy; this.life -= this.decay; if (this.life <= 0) this.reset(); } draw() { ctx.fillStyle = `rgba(220, 180, 110, ${this.life * 0.9})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); } }
         for(let i=0; i<100; i++) particles.push(new Particle());
         function animate() { ctx.clearRect(0,0, canvas.width, canvas.height); if (body.classList.contains('mode-default')) particles.forEach(p => { p.update(); p.draw(); }); requestAnimationFrame(animate); }
         animate();
 
-        // 同步逻辑
+        // 5. 核心同步逻辑
         function syncLrc(force = false) {
-            if (!isAuto && !force) return; // 锁定手动位置
+            if (!isAuto && !force) return; // 手动模式绝对锁定位置
             if (lyrics.length === 0) return;
             let idx = 0;
             lyrics.forEach((l, i) => { if (audio.currentTime >= l.time) idx = i; });
@@ -252,10 +251,11 @@
             if (activeLine) {
                 document.querySelectorAll('.lrc-line').forEach(el => el.classList.remove('active', 'preview'));
                 activeLine.classList.add('active');
-                vPort.scrollTo({ top: activeLine.offsetTop - vPort.offsetHeight/2 + activeLine.offsetHeight/2, behavior: 'smooth' });
+                scrollToIndex(idx, 'smooth');
             }
         }
 
+        // 6. 交互
         function getPos(clientX) { const rect = pContainer.getBoundingClientRect(); return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)); }
         const moveHandler = (e) => { if (!isDragging) return; const cx = e.touches ? e.touches[0].clientX : e.clientX; pFill.style.width = (getPos(cx) * 100) + '%'; };
         const stopHandler = (e) => { if (!isDragging) return; const cx = e.changedTouches ? e.changedTouches[0].clientX : e.clientX; audio.currentTime = getPos(cx) * audio.duration; isDragging = false; resetIdleTimer(); };
