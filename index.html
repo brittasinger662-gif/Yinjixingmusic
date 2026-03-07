@@ -3,101 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>音迹星工作室 - 专属试听</title>
+    <title>音迹星工作室 - 专属试听交付</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
     <style>
-        :root { --accent: #c0a16b; --bg: #0a0a0a; --text: #ffffff; }
+        :root {
+            --bg: #050505;
+            --card: rgba(15, 15, 15, 0.8);
+            --text: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.2);
+            --accent: #c0a16b;
+            --shine: linear-gradient(110deg, #888 20%, #fff 40%, #fff 60%, #888 80%);
+            --record-shadow: rgba(0,0,0,0.8);
+        }
+
+        /* 1. 白天模式样式回归 */
+        [data-theme="light"] {
+            --bg: #f5f7f9;
+            --card: rgba(255, 255, 255, 0.9);
+            --text: #1a1a1a;
+            --text-dim: rgba(0, 0, 0, 0.2);
+            --shine: linear-gradient(110deg, #333 20%, #000 40%, #000 60%, #333 80%);
+            --record-shadow: rgba(0,0,0,0.15);
+        }
+
         * { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; box-sizing: border-box; outline: none; }
         
         body { 
             margin: 0; background: var(--bg); color: var(--text); 
             font-family: 'PingFang SC', sans-serif; height: 100vh; 
-            display: flex; flex-direction: column; overflow: hidden; 
+            display: flex; flex-direction: column; overflow: hidden; transition: 0.5s;
         }
 
-        /* 顶部导航：回正按钮 */
-        .nav { padding: 15px 20px; display: flex; justify-content: flex-end; z-index: 100; }
-        .btn-reset { 
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            color: var(--accent); padding: 8px 15px; border-radius: 12px; font-size: 11px; cursor: pointer;
+        /* 导航栏：功能集成 */
+        .nav { padding: 15px 20px; display: flex; justify-content: space-between; z-index: 100; }
+        .btn-tool { 
+            background: rgba(128,128,128,0.1); border: 1px solid rgba(128,128,128,0.1);
+            color: var(--text); padding: 8px 15px; border-radius: 12px; font-size: 11px; cursor: pointer; transition: 0.3s;
         }
 
-        /* 1. 1:1 物理仿真黑胶 */
-        .record-section { flex-shrink: 0; display: flex; justify-content: center; padding: 10px 0; }
-        .record-box { width: 260px; height: 260px; position: relative; }
+        /* 2. 唱片区域：支持样式切换交互 */
+        .record-section { flex-shrink: 0; display: flex; justify-content: center; padding: 10px 0; position: relative; }
+        
+        /* 氛围呼吸灯 */
+        .record-glow {
+            position: absolute; width: 280px; height: 280px; border-radius: 50%;
+            background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+            opacity: 0.15; animation: breath 4s ease-in-out infinite; z-index: 1;
+        }
+
+        .record-box { width: 260px; height: 260px; position: relative; z-index: 2; cursor: pointer; }
+        
+        /* 基础样式（适配手机预览） */
         .vinyl { 
             width: 100%; height: 100%; border-radius: 50%; 
             background: radial-gradient(circle, #000 30%, transparent 31%), 
                         repeating-radial-gradient(circle, #0a0a0a, #000 1px, #181818 2px); 
             border: 6px solid #111; display: flex; align-items: center; justify-content: center; 
             animation: rotate 20s linear infinite paused; position: relative;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            box-shadow: 0 15px 50px var(--record-shadow); transition: 0.5s;
         }
+
+        /* 3. 1:1 物理仿真样式（点击后切换） */
+        .record-box.physical .vinyl {
+            background: radial-gradient(circle, transparent 42%, rgba(0,0,0,0.9) 43%),
+                        repeating-radial-gradient(circle, #080808, #000 1px, #1a1a1a 2px);
+            border: 8px solid #111;
+        }
+        .record-box.physical .vinyl-inner-ring {
+            position: absolute; width: 46%; height: 46%; border-radius: 50%;
+            background: #050505; box-shadow: inset 0 0 15px #000; z-index: 3;
+            display: flex; align-items: center; justify-content: center;
+        }
+
         .vinyl.playing { animation-play-state: running; }
         .vinyl::after { 
             content: ""; position: absolute; inset: 0; border-radius: 50%; 
-            background: conic-gradient(from 170deg at 50% 50%, transparent 0deg, rgba(255,255,255,0.1) 8deg, transparent 15deg, transparent 170deg, rgba(255,255,255,0.1) 178deg, transparent 185deg); 
+            background: conic-gradient(from 170deg at 50% 50%, transparent 0deg, rgba(255,255,255,0.12) 8deg, transparent 15deg, transparent 170deg, rgba(255,255,255,0.12) 178deg, transparent 185deg); 
             pointer-events: none; 
         }
-        .cover-art { width: 75%; height: 75%; border-radius: 50%; background-size: cover; background-position: center; z-index: 5; background-color: #222; }
+        .cover-art { width: 75%; height: 75%; border-radius: 50%; background-size: cover; background-position: center; z-index: 5; background-color: #222; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .record-box.physical .cover-art { width: 72%; height: 72%; }
 
-        /* 2. 标题区 */
+        /* 4. 品牌词：呼吸金属流光设计 */
         .info-box { text-align: center; padding: 10px 0; }
-        .main-title { font-size: 24px; font-weight: 700; letter-spacing: 4px; margin: 0; }
-        .status-msg { font-size: 12px; color: #666; letter-spacing: 2px; margin-top: 5px; }
+        .main-title { 
+            font-size: 26px; font-weight: 700; letter-spacing: 5px; margin: 0;
+            background-image: var(--shine); background-size: 200% auto;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+            animation: metal 6s linear infinite;
+        }
+        .status-msg { font-size: 11px; color: var(--accent); letter-spacing: 3px; margin-top: 5px; font-weight: bold; opacity: 0.6; }
 
-        /* 3. 歌词视口：弹性自适应，绝不遮挡 */
+        /* 歌词视口 */
         .lrc-viewport { 
             flex-grow: 1; position: relative; overflow-y: auto; 
             scroll-snap-type: y mandatory;
             mask-image: linear-gradient(to bottom, transparent, #fff 40%, #fff 60%, transparent);
             -webkit-mask-image: linear-gradient(to bottom, transparent, #fff 40%, #fff 60%, transparent);
-            margin: 10px 0;
         }
         .lrc-viewport::-webkit-scrollbar { display: none; }
-        #lrc-list { list-style: none; padding: 150px 0; margin: 0; text-align: center; }
+        #lrc-list { list-style: none; padding: 160px 0; margin: 0; text-align: center; }
         .lrc-line { 
-            padding: 15px 20px; font-size: 14px; color: rgba(255,255,255,0.2); 
-            transition: 0.4s ease; min-height: 50px; display: flex; align-items: center; justify-content: center;
+            padding: 15px 20px; font-size: 14px; color: var(--text-dim); 
+            transition: 0.4s ease; min-height: 55px; display: flex; align-items: center; justify-content: center;
             scroll-snap-align: center; cursor: pointer;
         }
-        .lrc-line.active { color: #fff; font-size: 19px; font-weight: 600; transform: scale(1.08); }
-        .lrc-line.preview { color: var(--accent); opacity: 0.5; font-size: 17px; transform: scale(1.05); }
+        .lrc-line.active { color: var(--text); font-size: 20px; font-weight: 600; transform: scale(1.1); }
+        .lrc-line.preview { color: var(--accent); opacity: 0.5; font-size: 18px; }
 
-        /* 4. 控制面板 */
-        .controls-section { flex-shrink: 0; padding: 20px; background: linear-gradient(to top, #000, transparent); }
+        /* 5. 交互控制面板：支持滑动拖拽 */
+        .controls-section { flex-shrink: 0; padding: 20px 20px 40px; }
         .controls-card { 
             width: 100%; max-width: 400px; margin: 0 auto; 
-            background: rgba(255,255,255,0.05); padding: 15px 20px; border-radius: 25px; 
-            backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05);
+            background: var(--card); padding: 18px 22px; border-radius: 30px; 
+            backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
         }
-        .progress-box { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-        .time-lab { font-size: 10px; color: var(--accent); min-width: 35px; font-family: monospace; }
-        .p-bar { flex: 1; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; cursor: pointer; position: relative; }
-        .p-fill { height: 100%; background: var(--accent); width: 0%; border-radius: 2px; }
-        .main-btn { width: 44px; height: 44px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; cursor: pointer; }
-        .disclaimer { font-size: 8px; color: #444; text-align: center; margin-top: 15px; letter-spacing: 1px; }
+        .progress-box { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+        .time-lab { font-size: 10px; color: var(--accent); min-width: 35px; font-family: 'Courier New', Courier, monospace; }
+        
+        .p-bar-container { flex: 1; height: 20px; display: flex; align-items: center; cursor: pointer; position: relative; }
+        .p-bar { width: 100%; height: 4px; background: rgba(128,128,128,0.2); border-radius: 2px; position: relative; overflow: visible; }
+        .p-fill { height: 100%; background: var(--accent); width: 0%; border-radius: 2px; position: relative; }
+        /* 拖动滑块 */
+        .p-fill::after {
+            content: ""; position: absolute; right: -6px; top: -4px;
+            width: 12px; height: 12px; background: #fff; border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3); border: 2px solid var(--accent);
+        }
+
+        .main-btn { 
+            width: 50px; height: 50px; background: var(--accent); border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; margin: 0 auto; cursor: pointer;
+            box-shadow: 0 8px 20px rgba(192, 161, 107, 0.4); transition: 0.2s;
+        }
+        .main-btn:active { transform: scale(0.9); }
+        .disclaimer { font-size: 9px; color: #666; text-align: center; margin-top: 15px; letter-spacing: 2px; font-weight: 300; }
 
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes metal { to { background-position: 200% center; } }
+        @keyframes breath { 0%, 100% { transform: scale(1); opacity: 0.1; } 50% { transform: scale(1.1); opacity: 0.25; } }
     </style>
 </head>
-<body>
+<body data-theme="dark">
 
     <div class="nav">
-        <button class="btn-reset" onclick="resetLrc()">🎯 歌词复位</button>
+        <button class="btn-tool" onclick="toggleTheme()">🌓 模式切换</button>
+        <button class="btn-tool" onclick="resetLrc()">🎯 歌词复位</button>
     </div>
 
     <div class="record-section">
-        <div class="record-box">
-            <div id="disk" class="vinyl" onclick="togglePlay()">
-                <div id="cover" class="cover-art"></div>
+        <div class="record-glow"></div>
+        <div id="record-wrapper" class="record-box" onclick="toggleRecordStyle()">
+            <div id="disk" class="vinyl">
+                <div class="vinyl-inner-ring">
+                    <div id="cover" class="cover-art"></div>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="info-box">
         <h1 class="main-title">音迹星工作室</h1>
-        <div id="status" class="status-msg">CUSTOMER PREVIEW</div>
+        <div id="status" class="status-msg">EXCLUSIVE CUSTOMIZATION</div>
     </div>
 
     <div class="lrc-viewport" id="vPort" onscroll="handleScroll()">
@@ -106,16 +174,20 @@
 
     <div class="controls-section">
         <div class="controls-card">
-            <div class="progress-box" onclick="seek(event)">
+            <div class="progress-box">
                 <span class="time-lab" id="t-cur">00:00</span>
-                <div class="p-bar" id="p-bar"><div class="p-fill" id="p-fill"></div></div>
+                <div class="p-bar-container" id="p-container">
+                    <div class="p-bar">
+                        <div class="p-fill" id="p-fill"></div>
+                    </div>
+                </div>
                 <span class="time-lab" id="t-dur">00:00</span>
             </div>
             <div class="main-btn" onclick="togglePlay()">
                 <svg id="svg-p" viewBox="0 0 24 24" width="24" height="24"><path d="M8 5v14l11-7z"/></svg>
                 <svg id="svg-s" viewBox="0 0 24 24" width="24" height="24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
             </div>
-            <div class="disclaimer">专属定制 · 严禁转载 · 音迹星工作室</div>
+            <div class="disclaimer">音迹星工作室 · 专属试听预览</div>
         </div>
     </div>
 
@@ -126,12 +198,15 @@
         const disk = document.getElementById('disk');
         const list = document.getElementById('lrc-list');
         const vPort = document.getElementById('vPort');
+        const pFill = document.getElementById('p-fill');
+        const pContainer = document.getElementById('p-container');
         const params = new URLSearchParams(window.location.search);
 
         let isAuto = true;
+        let isDragging = false;
         let lyrics = [];
 
-        // 1. 数据接入
+        // 1. 初始化数据
         const audioUrl = params.get('audio');
         const lrcUrl = params.get('lrc');
 
@@ -147,8 +222,6 @@
                     }
                 }
             });
-        } else {
-            document.getElementById('status').innerText = "未找到音频件";
         }
 
         if (lrcUrl) {
@@ -161,31 +234,77 @@
             });
         }
 
-        // 2. 交互逻辑：复位与预览
+        // 2. 交互：日夜切换与唱片样式
+        function toggleTheme() {
+            const body = document.body;
+            body.setAttribute('data-theme', body.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+        }
+
+        function toggleRecordStyle() {
+            document.getElementById('record-wrapper').classList.toggle('physical');
+        }
+
+        // 3. 交互：进度条拖拽逻辑
+        function updateProgress(clientX) {
+            const rect = pContainer.getBoundingClientRect();
+            let per = (clientX - rect.left) / rect.width;
+            per = Math.max(0, Math.min(1, per));
+            pFill.style.width = (per * 100) + '%';
+            return per;
+        }
+
+        pContainer.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            const per = updateProgress(e.clientX);
+            audio.currentTime = per * audio.duration;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging) updateProgress(e.clientX);
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (isDragging) {
+                const per = updateProgress(e.clientX);
+                audio.currentTime = per * audio.duration;
+                isDragging = false;
+            }
+        });
+
+        // 移动端拖拽
+        pContainer.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            updateProgress(e.touches[0].clientX);
+        });
+        window.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                e.preventDefault();
+                updateProgress(e.touches[0].clientX);
+            }
+        }, { passive: false });
+        window.addEventListener('touchend', (e) => {
+            if (isDragging) {
+                const rect = pContainer.getBoundingClientRect();
+                const per = updateProgress(e.changedTouches[0].clientX);
+                audio.currentTime = per * audio.duration;
+                isDragging = false;
+            }
+        });
+
+        // 4. 歌词与基础控制
         function handleScroll() {
             if (isAuto) return;
             const mid = vPort.scrollTop + vPort.offsetHeight / 2;
             document.querySelectorAll('.lrc-line').forEach(line => {
                 const lineMid = line.offsetTop + line.offsetHeight / 2;
                 line.classList.remove('preview');
-                if (Math.abs(mid - lineMid) < 30 && !line.classList.contains('active')) {
-                    line.classList.add('preview');
-                }
+                if (Math.abs(mid - lineMid) < 30 && !line.classList.contains('active')) line.classList.add('preview');
             });
         }
 
-        function resetLrc() {
-            isAuto = true;
-            syncLrc();
-        }
+        function resetLrc() { isAuto = true; syncLrc(); }
+        function jumpTo(i) { isAuto = false; const line = document.getElementById(`r-${i}`); vPort.scrollTo({ top: line.offsetTop - vPort.offsetHeight/2 + line.offsetHeight/2, behavior: 'smooth' }); }
 
-        function jumpTo(i) {
-            isAuto = false;
-            const line = document.getElementById(`r-${i}`);
-            vPort.scrollTo({ top: line.offsetTop - vPort.offsetHeight/2 + line.offsetHeight/2, behavior: 'smooth' });
-        }
-
-        // 3. 播放同步
         function syncLrc() {
             if (!isAuto || lyrics.length === 0) return;
             let idx = 0;
@@ -199,27 +318,24 @@
         }
 
         audio.addEventListener('timeupdate', () => {
+            if (isDragging) return;
             syncLrc();
             const p = (audio.currentTime / audio.duration) * 100;
-            document.querySelector('.p-fill').style.width = p + '%';
+            pFill.style.width = p + '%';
             document.getElementById('t-cur').innerText = fmt(audio.currentTime);
             document.getElementById('t-dur').innerText = fmt(audio.duration);
         });
 
-        vPort.addEventListener('touchstart', () => isAuto = false);
-        vPort.addEventListener('wheel', () => isAuto = false);
-
-        // 4. 基础控制
-        function togglePlay() {
-            if (audio.paused) { audio.play(); ui(true); } else { audio.pause(); ui(false); }
-        }
+        function togglePlay() { audio.paused ? audio.play() : audio.pause(); }
+        audio.onplay = () => { ui(true); };
+        audio.onpause = () => { ui(false); };
         function ui(p) {
             document.getElementById('svg-p').style.display = p ? 'none' : 'block';
             document.getElementById('svg-s').style.display = p ? 'block' : 'none';
             p ? disk.classList.add('playing') : disk.classList.remove('playing');
         }
         function fmt(s) { const m=Math.floor(s/60),sec=Math.floor(s%60); return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`; }
-        function seek(e) { audio.currentTime = ((e.clientX - document.getElementById('p-bar').getBoundingClientRect().left) / document.getElementById('p-bar').offsetWidth) * audio.duration; }
+        vPort.addEventListener('touchstart', () => isAuto = false);
         window.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); togglePlay(); } });
     </script>
 </body>
