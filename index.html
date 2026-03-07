@@ -37,48 +37,57 @@
             color: var(--text); padding: 8px 12px; border-radius: 12px; font-size: 11px; cursor: pointer;
         }
 
-        /* 1. 唱片区修复：确保封面显示 */
-        .record-section { flex-shrink: 0; display: flex; justify-content: center; padding: 5px 0; position: relative; }
-        .record-box { width: 240px; height: 240px; position: relative; z-index: 10; cursor: pointer; }
+        /* 1. 【重构】物理级唱片容器 */
+        .record-section { flex-shrink: 0; display: flex; justify-content: center; padding: 10px 0; position: relative; }
+        .record-box { width: 260px; height: 260px; position: relative; z-index: 10; cursor: pointer; }
         
         .vinyl { 
             width: 100%; height: 100%; border-radius: 50%; 
-            background: radial-gradient(circle, #000 30%, transparent 31%), 
-                        repeating-radial-gradient(circle, #0a0a0a, #000 1px, #181818 2px); 
+            background: repeating-radial-gradient(circle, #0a0a0a, #000 1px, #181818 2px); 
             border: 6px solid #111; display: flex; align-items: center; justify-content: center; 
             animation: rotate 20s linear infinite paused; position: relative;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6); transition: 0.5s ease;
         }
 
-        /* 物理仿真层 */
-        .record-box.physical .vinyl {
-            background: radial-gradient(circle, transparent 42%, rgba(0,0,0,0.9) 43%),
-                        repeating-radial-gradient(circle, #080808, #000 1px, #1a1a1a 2px);
+        /* 2. 【核心】中圈同心环 - 仅在 physical 模式显示 */
+        .inner-ring {
+            position: absolute; inset: 0; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(circle, #000 30%, transparent 31%); /* 默认黑心 */
+            transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .vinyl-inner-ring {
-            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-        }
-        .record-box.physical .vinyl-inner-ring::before {
-            content: ""; position: absolute; width: 46%; height: 46%; border-radius: 50%;
-            background: #050505; box-shadow: inset 0 0 15px #000; z-index: 3;
+
+        /* 物理模式：钢琴黑反射区 (Dead Wax) */
+        .record-box.physical .inner-ring {
+            background: #050505;
+            width: 48%; height: 48%; margin: auto;
+            box-shadow: inset 0 0 15px #000, 0 0 20px rgba(0,0,0,0.5);
         }
 
         .vinyl.playing { animation-play-state: running; }
+        /* 物理高光 */
         .vinyl::after { 
             content: ""; position: absolute; inset: 0; border-radius: 50%; 
             background: conic-gradient(from 170deg at 50% 50%, transparent 0deg, rgba(255,255,255,0.12) 8deg, transparent 15deg, transparent 170deg, rgba(255,255,255,0.12) 178deg, transparent 185deg); 
             pointer-events: none; z-index: 6;
         }
         
-        /* 封面：确保层级高于背景 */
+        /* 3. 【核心】封面大小逻辑联动 */
         .cover-art { 
-            width: 75%; height: 75%; border-radius: 50%; 
+            width: 78%; height: 78%; border-radius: 50%; 
             background-size: cover; background-position: center; 
-            z-index: 5; background-color: #222;
+            z-index: 10; background-color: #111;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             background-image: url('https://pdyvfhfwqlrizgcxlgax.supabase.co/storage/v1/object/public/MUSIC-FILES/default_gold.jpg'); 
         }
 
-        /* 2. 品牌呼吸流光 */
+        /* 物理模式下：封面缩小到实物比例 */
+        .record-box.physical .cover-art {
+            width: 70%; height: 70%; /* 在 inner-ring 容器内的比例 */
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        /* 4. 品牌呼吸流光 */
         .info-box { text-align: center; padding: 10px 0; flex-shrink: 0; }
         .main-title { 
             font-size: 24px; font-weight: 700; letter-spacing: 4px; margin: 0;
@@ -87,29 +96,24 @@
             animation: metal 6s linear infinite;
         }
 
-        /* 3. 歌词视口修复：扩宽视野 */
+        /* 5. 歌词视口：保持 V18 优秀的多行视野 */
         .lrc-viewport { 
             flex-grow: 1; position: relative; overflow-y: auto; 
             scroll-snap-type: y mandatory;
-            /* 调整渐变遮罩，让上下歌词更清晰 */
             mask-image: linear-gradient(to bottom, transparent 0%, #fff 20%, #fff 80%, transparent 100%);
             -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #fff 20%, #fff 80%, transparent 100%);
-            margin: 5px 0;
         }
         .lrc-viewport::-webkit-scrollbar { display: none; }
-        
         #lrc-list { list-style: none; padding: 180px 0; margin: 0; text-align: center; }
         .lrc-line { 
             padding: 12px 25px; font-size: 15px; color: var(--text-dim); 
             transition: 0.4s ease; min-height: 45px; display: flex; align-items: center; justify-content: center;
             scroll-snap-align: center; cursor: pointer;
         }
-        /* 正在播放：亮白色 */
         .lrc-line.active { color: var(--text); font-size: 20px; font-weight: 600; transform: scale(1.05); }
-        /* 预览中心：金色预览感 */
         .lrc-line.preview { color: var(--accent); opacity: 0.6; font-size: 18px; }
 
-        /* 4. 控制面板 */
+        /* 6. 控制面板：支持拖拽进度 */
         .controls-section { flex-shrink: 0; padding: 15px 20px 30px; }
         .controls-card { 
             width: 100%; max-width: 400px; margin: 0 auto; 
@@ -118,20 +122,12 @@
         }
         .progress-box { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
         .time-lab { font-size: 10px; color: var(--accent); min-width: 35px; font-family: monospace; }
-        
         .p-bar-container { flex: 1; height: 20px; display: flex; align-items: center; cursor: pointer; position: relative; }
         .p-bar { width: 100%; height: 4px; background: rgba(128,128,128,0.2); border-radius: 2px; }
         .p-fill { height: 100%; background: var(--accent); width: 0%; border-radius: 2px; position: relative; }
-        .p-fill::after {
-            content: ""; position: absolute; right: -6px; top: -4px;
-            width: 12px; height: 12px; background: #fff; border-radius: 50%;
-            border: 2px solid var(--accent);
-        }
+        .p-fill::after { content: ""; position: absolute; right: -6px; top: -4px; width: 12px; height: 12px; background: #fff; border-radius: 50%; border: 2px solid var(--accent); }
 
-        .main-btn { 
-            width: 48px; height: 48px; background: var(--accent); border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; margin: 0 auto;
-        }
+        .main-btn { width: 48px; height: 48px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
 
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes metal { to { background-position: 200% center; } }
@@ -147,7 +143,7 @@
     <div class="record-section">
         <div id="record-wrapper" class="record-box" onclick="toggleRecordStyle()">
             <div id="disk" class="vinyl">
-                <div class="vinyl-inner-ring">
+                <div class="inner-ring">
                     <div id="cover" class="cover-art"></div>
                 </div>
             </div>
@@ -190,14 +186,10 @@
         const resetBtn = document.getElementById('reset-btn');
         const params = new URLSearchParams(window.location.search);
 
-        let isAuto = true;
-        let isDragging = false;
-        let lyrics = [];
+        let isAuto = true, isDragging = false, lyrics = [];
 
-        // 1. 初始化数据
-        const audioUrl = params.get('audio');
-        const lrcUrl = params.get('lrc');
-
+        // 1. 初始化
+        const audioUrl = params.get('audio'), lrcUrl = params.get('lrc');
         if (audioUrl) {
             audio.src = audioUrl;
             window.jsmediatags.read(audioUrl, {
@@ -211,7 +203,6 @@
                 }
             });
         }
-
         if (lrcUrl) {
             fetch(lrcUrl).then(r => r.text()).then(t => {
                 lyrics = t.split('\n').map(l => {
@@ -222,50 +213,30 @@
             });
         }
 
-        // 2. 交互逻辑
+        // 2. 模式与样式切换
         function toggleTheme() {
             const body = document.body;
             body.setAttribute('data-theme', body.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
         }
-
         function toggleRecordStyle() {
             document.getElementById('record-wrapper').classList.toggle('physical');
         }
 
-        // 3. 【核心修正】滚动控制：拦截自动回弹
+        // 3. 歌词与滚动
         vPort.addEventListener('wheel', () => setManualMode());
         vPort.addEventListener('mousedown', () => setManualMode());
         vPort.addEventListener('touchstart', () => setManualMode());
+        function setManualMode() { if (isAuto) { isAuto = false; resetBtn.style.display = 'block'; } }
+        function resetLrc() { isAuto = true; resetBtn.style.display = 'none'; syncLrc(true); }
+        function jumpTo(i) { setManualMode(); const line = document.getElementById(`r-${i}`); vPort.scrollTo({ top: line.offsetTop - vPort.offsetHeight/2 + line.offsetHeight/2, behavior: 'smooth' }); }
 
-        function setManualMode() {
-            if (isAuto) {
-                isAuto = false;
-                resetBtn.style.display = 'block';
-            }
-        }
-
-        function resetLrc() {
-            isAuto = true;
-            resetBtn.style.display = 'none';
-            syncLrc(true); // 立即回弹
-        }
-
-        function jumpTo(i) {
-            setManualMode();
-            const line = document.getElementById(`r-${i}`);
-            vPort.scrollTo({ top: line.offsetTop - vPort.offsetHeight/2 + line.offsetHeight/2, behavior: 'smooth' });
-        }
-
-        // 4. 歌词渲染与预览效果
         vPort.addEventListener('scroll', () => {
             if (isAuto) return;
             const mid = vPort.scrollTop + vPort.offsetHeight / 2;
             document.querySelectorAll('.lrc-line').forEach(line => {
                 const lineMid = line.offsetTop + line.offsetHeight / 2;
                 line.classList.remove('preview');
-                if (Math.abs(mid - lineMid) < 30 && !line.classList.contains('active')) {
-                    line.classList.add('preview');
-                }
+                if (Math.abs(mid - lineMid) < 30 && !line.classList.contains('active')) line.classList.add('preview');
             });
         });
 
@@ -281,37 +252,19 @@
             }
         }
 
-        audio.addEventListener('timeupdate', () => {
-            if (isDragging) return;
-            syncLrc();
-            const p = (audio.currentTime / audio.duration) * 100;
-            pFill.style.width = p + '%';
-            document.getElementById('t-cur').innerText = fmt(audio.currentTime);
-            document.getElementById('t-dur').innerText = fmt(audio.duration);
-        });
-
-        // 5. 进度条拖拽
-        function getPos(clientX) {
-            const rect = pContainer.getBoundingClientRect();
-            let per = (clientX - rect.left) / rect.width;
-            return Math.max(0, Math.min(1, per));
-        }
+        // 4. 进度条与播放
+        function getPos(clientX) { const rect = pContainer.getBoundingClientRect(); return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)); }
         pContainer.addEventListener('mousedown', (e) => { isDragging = true; audio.currentTime = getPos(e.clientX) * audio.duration; });
         window.addEventListener('mousemove', (e) => { if (isDragging) pFill.style.width = (getPos(e.clientX) * 100) + '%'; });
         window.addEventListener('mouseup', (e) => { if (isDragging) { audio.currentTime = getPos(e.clientX) * audio.duration; isDragging = false; } });
-        
         pContainer.addEventListener('touchstart', (e) => { isDragging = true; });
         window.addEventListener('touchmove', (e) => { if (isDragging) pFill.style.width = (getPos(e.touches[0].clientX) * 100) + '%'; });
         window.addEventListener('touchend', (e) => { if (isDragging) { audio.currentTime = getPos(e.changedTouches[0].clientX) * audio.duration; isDragging = false; } });
 
+        audio.addEventListener('timeupdate', () => { if (!isDragging) { syncLrc(); pFill.style.width = (audio.currentTime / audio.duration) * 100 + '%'; document.getElementById('t-cur').innerText = fmt(audio.currentTime); document.getElementById('t-dur').innerText = fmt(audio.duration); } });
         function togglePlay() { audio.paused ? audio.play() : audio.pause(); }
-        audio.onplay = () => { ui(true); };
-        audio.onpause = () => { ui(false); };
-        function ui(p) {
-            document.getElementById('svg-p').style.display = p ? 'none' : 'block';
-            document.getElementById('svg-s').style.display = p ? 'block' : 'none';
-            p ? disk.classList.add('playing') : disk.classList.remove('playing');
-        }
+        audio.onplay = () => { ui(true); }; audio.onpause = () => { ui(false); };
+        function ui(p) { document.getElementById('svg-p').style.display = p ? 'none' : 'block'; document.getElementById('svg-s').style.display = p ? 'block' : 'none'; p ? disk.classList.add('playing') : disk.classList.remove('playing'); }
         function fmt(s) { const m=Math.floor(s/60),sec=Math.floor(s%60); return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`; }
         window.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); togglePlay(); } });
     </script>
